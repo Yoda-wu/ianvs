@@ -141,41 +141,46 @@ class Rank:
 
     def _get_all(self, test_cases, test_results) -> pd.DataFrame:
         all_df = pd.DataFrame(columns=self.all_df_header)
+        print(all_df)
         for i, test_case in enumerate(test_cases):
+            print(f"get all : test case {test_case}")
             all_df.loc[i] = [np.NAN for i in range(len(self.all_df_header))]
             # fill name column of algorithm
             algorithm = test_case.algorithm
-            all_df.loc[i][0] = algorithm.name
+            print(f" algorithm name is : {algorithm.name} and {all_df.loc[i][0]}")
+            all_df.loc[i, 'algorithm'] = algorithm.name
             # fill metric columns of algorithm
             for metric_name in test_results[test_case.id][0]:
-                all_df.loc[i][metric_name] = test_results[test_case.id][0].get(metric_name)
-
+                print(f"in get all metric_name is {metric_name}, test_result is {test_results[test_case.id][0]}")
+                all_df.loc[i, metric_name] = test_results[test_case.id][0].get(metric_name)
             # file paradigm column of algorithm
-            all_df.loc[i]["paradigm"] = algorithm.paradigm_type
-
+            all_df.loc[i, "paradigm"] = algorithm.paradigm_type
+            print(f"in_get_all all_df.loc[i][paradigm]: {all_df.loc[i]['paradigm']} and {algorithm.paradigm_type}")
             # fill module columns of algorithm
             for module_type, module in algorithm.modules.items():
-                all_df.loc[i][module_type] = module.name
+                all_df.loc[i, module_type] = module.name
 
             # fill hyperparameters columns of algorithm modules
             hps = self._get_algorithm_hyperparameters(algorithm)
 
             # pylint: disable=C0103
             for k, v in hps.items():
-                all_df.loc[i][k] = v
+                all_df.loc[i, k] = v
             # fill time and output dir of testcase
-            all_df.loc[i][-2:] = [test_results[test_case.id][1], test_case.output_dir]
+            all_df.loc[i, 'time'] = test_results[test_case.id][1]
+            # all_df.loc[i, 'url']  = test_case.output_dir.
+            print(f"in_get_all all_df.loc[i]: {all_df.loc[i]}")
 
         if utils.is_local_file(self.all_rank_file):
             old_df = pd.read_csv(self.all_rank_file, delim_whitespace=True, index_col=0)
-            all_df = all_df.append(old_df)
+            all_df = all_df._append(old_df)
 
         return self._sort_all_df(all_df, self._get_all_metric_names(test_results))
 
     def _save_all(self):
         # pylint: disable=E1101
         all_df = copy.deepcopy(self.all_df)
-        all_df.index = pd.np.arange(1, len(all_df) + 1)
+        all_df.index = np.arange(1, len(all_df) + 1)
         all_df.to_csv(self.all_rank_file, index_label="rank", encoding="utf-8", sep=" ")
 
     def _get_selected(self, test_cases, test_results) -> pd.DataFrame:
@@ -205,7 +210,7 @@ class Rank:
     def _save_selected(self, test_cases, test_results):
         # pylint: disable=E1101
         selected_df = self._get_selected(test_cases, test_results)
-        selected_df.index = pd.np.arange(1, len(selected_df) + 1)
+        selected_df.index = np.arange(1, len(selected_df) + 1)
         selected_df.to_csv(self.selected_rank_file, index_label="rank", encoding="utf-8", sep=" ")
 
     def _draw_pictures(self, test_cases, test_results):
@@ -220,11 +225,14 @@ class Rank:
 
     def _prepare(self, test_cases, test_results, output_dir):
         all_metric_names = self._get_all_metric_names(test_results)
+        print(f"in_prepare all_metric_names: {all_metric_names}")
         all_hps_names = self._get_all_hps_names(test_cases)
+        print(f"in_prepare all_hps_names: {all_hps_names}")
         all_module_types = self._get_all_module_types(test_cases)
+        print(f"in_prepare all_module_types: {all_module_types}")
         self.all_df_header = ["algorithm", *all_metric_names, "paradigm",
                               *all_module_types, *all_hps_names, "time", "url"]
-
+        print(f"in_prepare all_df_header: {self.all_df_header}")
         rank_output_dir = os.path.join(output_dir, "rank")
         if not utils.is_local_dir(rank_output_dir):
             os.makedirs(rank_output_dir)

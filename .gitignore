@@ -135,3 +135,6 @@ dmypy.json
 # generated files by MacOS
 .DS_Store 
 */.DS_Store 
+
+# pycharm files
+.idea/
